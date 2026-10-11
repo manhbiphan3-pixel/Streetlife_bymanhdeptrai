@@ -32,7 +32,7 @@ if not success or not ScreenGui.Parent then
     ScreenGui.Parent = PlayerGui
 end
 
--- 1. NÚT MỞ/TẮT MENU
+-- 1. NÚT MỞ/TẮT MENU NGOÀI MÀN HÌNH
 local ToggleButton = Instance.new("ImageButton")
 ToggleButton.Name = "ToggleBtn"
 ToggleButton.Parent = ScreenGui
@@ -107,7 +107,7 @@ CloseBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
 CloseBtn.Font = Enum.Font.SourceSansBold
 CloseBtn.TextSize = 18
 
--- Nút Thu nhỏ (-)
+-- Nút Thu nhỏ (-) thành thanh ngang
 local MinimizeBtn = Instance.new("TextButton")
 MinimizeBtn.Name = "MinimizeBtn"
 MinimizeBtn.Parent = TitleBar
@@ -119,19 +119,7 @@ MinimizeBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
 MinimizeBtn.Font = Enum.Font.SourceSansBold
 MinimizeBtn.TextSize = 18
 
-CloseBtn.MouseButton1Click:Connect(function()
-    MainFrame.Visible = false
-end)
-
-MinimizeBtn.MouseButton1Click:Connect(function()
-    MainFrame.Visible = false
-end)
-
-ToggleButton.MouseButton1Click:Connect(function()
-    MainFrame.Visible = not MainFrame.Visible
-end)
-
--- 3. Thanh Tab Navigation
+-- 3. Thanh Tab Navigation & Khung chứa nội dung
 local TabHolder = Instance.new("ScrollingFrame")
 TabHolder.Parent = MainFrame
 TabHolder.Size = UDim2.new(1, -20, 0, 35)
@@ -150,6 +138,41 @@ ContentHolder.Parent = MainFrame
 ContentHolder.Size = UDim2.new(1, -20, 1, -98)
 ContentHolder.Position = UDim2.new(0, 10, 0, 88)
 ContentHolder.BackgroundTransparency = 1
+
+local isMinimized = false
+
+MinimizeBtn.MouseButton1Click:Connect(function()
+    isMinimized = not isMinimized
+    if isMinimized then
+        MainFrame.Size = UDim2.new(0, 500, 0, 40)
+        TabHolder.Visible = false
+        ContentHolder.Visible = false
+        DividerLine.Visible = false
+        MinimizeBtn.Text = "+"
+    else
+        MainFrame.Size = UDim2.new(0, 500, 0, 310)
+        TabHolder.Visible = true
+        ContentHolder.Visible = true
+        DividerLine.Visible = true
+        MinimizeBtn.Text = "—"
+    end
+end)
+
+CloseBtn.MouseButton1Click:Connect(function()
+    MainFrame.Visible = false
+    if isMinimized then
+        isMinimized = false
+        MainFrame.Size = UDim2.new(0, 500, 0, 310)
+        TabHolder.Visible = true
+        ContentHolder.Visible = true
+        DividerLine.Visible = true
+        MinimizeBtn.Text = "—"
+    end
+end)
+
+ToggleButton.MouseButton1Click:Connect(function()
+    MainFrame.Visible = not MainFrame.Visible
+end)
 
 local tabs = {}
 local teleButtons = {}
@@ -210,7 +233,7 @@ tabs[1].btn.BackgroundColor3 = Color3.fromRGB(230, 230, 230)
 tabs[1].btn.TextColor3 = Color3.fromRGB(20, 20, 20)
 tabs[1].container.Visible = true
 
--- --- HÀM KIỂM TRA ĐANG NGỒI TRÊN XE ---
+-- --- HÀM KIỂM TRA & DỊCH CHUYỂN AN TOÀN (KHÔNG KẸT XE) ---
 local function TeleportWithScooter(targetCFrame, btnInfo)
     local btnObj = btnInfo.btn
     if btnInfo.isBusy then return end
@@ -223,11 +246,15 @@ local function TeleportWithScooter(targetCFrame, btnInfo)
 
     if humanoid.SeatPart and humanoid.SeatPart.Parent then
         local vehicle = humanoid.SeatPart.Parent
+        
+        -- Dịch chuyển xe elevated nhẹ lên +1.5 studs chiều cao Y để chống dính sàn/kẹt xe
+        local safeCFrame = targetCFrame + Vector3.new(0, 1.5, 0)
+
         if vehicle:IsA("Model") then
-            vehicle:PivotTo(targetCFrame)
+            vehicle:PivotTo(safeCFrame)
             return
         elseif vehicle.Parent and vehicle.Parent:IsA("Model") then
-            vehicle.Parent:PivotTo(targetCFrame)
+            vehicle.Parent:PivotTo(safeCFrame)
             return
         end
     end
@@ -277,15 +304,15 @@ AddTeleportButton(tab1, "Bán Hàng", "Sell Goods", CFrame.new(269.02, 52.42, 30
 AddTeleportButton(tab1, "Mua Súng", "Gun Shop", CFrame.new(648.96, 52.48, -389.50))
 AddTeleportButton(tab1, "Mua Mặt Nạ", "Mask Shop", CFrame.new(178.70, 52.29, -50.94))
 
--- 2. TAB TRỘM VÀNG BẠC
+-- 2. TAB TRỘM VÀNG BẠC (FIXED TỌA ĐỘ TIỆM TRANG SỨC KHÔNG BỊ KẸT XE)
 AddTeleportButton(tab2, "Ngân Hàng", "Bank", CFrame.new(415.44, -48.84, 103.72))
 AddTeleportButton(tab2, "Cây Rút Tiền / ATM", "ATM / Withdraw", CFrame.new(415.11, 52.42, 72.56))
-AddTeleportButton(tab2, "Tiệm Trang Sức", "Jewelry Store", CFrame.new(4.77, 52.65, -241.81))
+AddTeleportButton(tab2, "Tiệm Trang Sức", "Jewelry Store", CFrame.new(3.01, 54.20, -212.34)) -- Nâng Y từ 52.93 lên 54.20 để đáp xe mượt hơn
 AddTeleportButton(tab2, "Bảo Tàng", "Museum", CFrame.new(1377.23, 83.09, -116.09))
-AddTeleportButton(tab2, "Bến Tàu", "Boat Dock", CFrame.new(927.29, 80.57, 1825.00))
+AddTeleportButton(tab2, "Bến Tàu / Du Thuyền", "Boat Dock / Yacht", CFrame.new(966.44, 77.93, -1824.37))
 
 -- 3. TAB TIỆM 15000$
-AddTeleportButton(tab3, "Cửa Hàng Xanh Lá", "Green Mart", CFrame.new(556.19, 52.39, 118.92))
+AddTeleportButton(tab3, "Cửa Hàng Xanh Lá", "Green Mart", CFrame.new(1170.15, 70.18, 595.88))
 AddTeleportButton(tab3, "Cửa Hàng Vàng", "Yellow Mart", CFrame.new(1182.81, 52.53, -381.33))
 AddTeleportButton(tab3, "Cửa Hàng Xanh Dương", "Blue Mart", CFrame.new(882.75, 53.03, -376.92))
 AddTeleportButton(tab3, "Cửa Hàng Đỏ", "Red Mart", CFrame.new(556.19, 52.39, 118.92))
