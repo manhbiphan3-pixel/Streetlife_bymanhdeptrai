@@ -80,7 +80,7 @@ TitleText.Parent = TitleBar
 TitleText.Position = UDim2.new(0, 15, 0, 0)
 TitleText.Size = UDim2.new(1, -100, 1, 0)
 TitleText.Text = "Street Life | Đức Mạnh"
-TitleText.TextColor3 = Color3.fromRGB(240, 240, 240)
+TitleText.TextColor3 = Color3.fromRGB(255, 255, 255)
 TitleText.TextXAlignment = Enum.TextXAlignment.Left
 TitleText.Font = Enum.Font.SourceSansBold
 TitleText.TextSize = 16
@@ -107,7 +107,7 @@ CloseBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
 CloseBtn.Font = Enum.Font.SourceSansBold
 CloseBtn.TextSize = 18
 
--- Nút Thu nhỏ (-) thành thanh ngang
+-- Nút Thu nhỏ (-)
 local MinimizeBtn = Instance.new("TextButton")
 MinimizeBtn.Name = "MinimizeBtn"
 MinimizeBtn.Parent = TitleBar
@@ -125,7 +125,7 @@ TabHolder.Parent = MainFrame
 TabHolder.Size = UDim2.new(1, -20, 0, 35)
 TabHolder.Position = UDim2.new(0, 10, 0, 48)
 TabHolder.BackgroundTransparency = 1
-TabHolder.CanvasSize = UDim2.new(0, 720, 0, 0)
+TabHolder.CanvasSize = UDim2.new(0, 960, 0, 0)
 TabHolder.ScrollBarThickness = 0
 
 local TabListLayout = Instance.new("UIListLayout")
@@ -227,13 +227,15 @@ local tab2 = createTab("Trộm vàng bạc", "Gold & Silver")
 local tab3 = createTab("Tiệm 15000$", "Shop $15,000")
 local tab4 = createTab("Chỗ cất đồ", "Storage")
 local tab5 = createTab("Chỗ bán dầu", "Oil Shop")
-local tab6 = createTab("Cài đặt", "Settings")
+local tab6 = createTab("Hiện đồ", "Show Items ESP")
+local tab7 = createTab("Xem Balo", "Check Backpack")
+local tab8 = createTab("Cài đặt", "Settings")
 
 tabs[1].btn.BackgroundColor3 = Color3.fromRGB(230, 230, 230)
 tabs[1].btn.TextColor3 = Color3.fromRGB(20, 20, 20)
 tabs[1].container.Visible = true
 
--- --- HÀM KIỂM TRA & DỊCH CHUYỂN AN TOÀN (KHÔNG KẸT XE) ---
+-- --- HÀM KIỂM TRA & DỊCH CHUYỂN AN TOÀN ---
 local function TeleportWithScooter(targetCFrame, btnInfo)
     local btnObj = btnInfo.btn
     if btnInfo.isBusy then return end
@@ -246,8 +248,6 @@ local function TeleportWithScooter(targetCFrame, btnInfo)
 
     if humanoid.SeatPart and humanoid.SeatPart.Parent then
         local vehicle = humanoid.SeatPart.Parent
-        
-        -- Dịch chuyển xe elevated nhẹ lên +1.5 studs chiều cao Y để chống dính sàn/kẹt xe
         local safeCFrame = targetCFrame + Vector3.new(0, 1.5, 0)
 
         if vehicle:IsA("Model") then
@@ -304,10 +304,10 @@ AddTeleportButton(tab1, "Bán Hàng", "Sell Goods", CFrame.new(269.02, 52.42, 30
 AddTeleportButton(tab1, "Mua Súng", "Gun Shop", CFrame.new(648.96, 52.48, -389.50))
 AddTeleportButton(tab1, "Mua Mặt Nạ", "Mask Shop", CFrame.new(178.70, 52.29, -50.94))
 
--- 2. TAB TRỘM VÀNG BẠC (FIXED TỌA ĐỘ TIỆM TRANG SỨC KHÔNG BỊ KẸT XE)
+-- 2. TAB TRỘM VÀNG BẠC
 AddTeleportButton(tab2, "Ngân Hàng", "Bank", CFrame.new(415.44, -48.84, 103.72))
 AddTeleportButton(tab2, "Cây Rút Tiền / ATM", "ATM / Withdraw", CFrame.new(415.11, 52.42, 72.56))
-AddTeleportButton(tab2, "Tiệm Trang Sức", "Jewelry Store", CFrame.new(3.01, 54.20, -212.34)) -- Nâng Y từ 52.93 lên 54.20 để đáp xe mượt hơn
+AddTeleportButton(tab2, "Tiệm Trang Sức", "Jewelry Store", CFrame.new(3.01, 54.20, -212.34))
 AddTeleportButton(tab2, "Bảo Tàng", "Museum", CFrame.new(1377.23, 83.09, -116.09))
 AddTeleportButton(tab2, "Bến Tàu / Du Thuyền", "Boat Dock / Yacht", CFrame.new(966.44, 77.93, -1824.37))
 
@@ -330,6 +330,273 @@ AddTeleportButton(tab4, "Khu Siêu Biệt Thự", "Mansion Area", CFrame.new(135
 -- 5. TAB CHỖ BÁN DẦU
 AddTeleportButton(tab5, "Bán Dầu", "Sell Oil", CFrame.new(-116.97, 70.22, 413.53))
 AddTeleportButton(tab5, "Dầu Olise", "Olise Oil", CFrame.new(-251.88, 83.70, -1685.93))
+
+-- --- 6. TAB HIỆN ĐỒ TRÊN ĐẦU (CHỮ MÀU TRẮNG - SIÊU GỌN) ---
+local espEnabled = false
+local espConnections = {}
+
+local function RemoveESP(plr)
+    if plr.Character then
+        local head = plr.Character:FindFirstChild("Head")
+        if head and head:FindFirstChild("ItemESP") then
+            head.ItemESP:Destroy()
+        end
+    end
+end
+
+local function CreateESP(plr)
+    if plr == LocalPlayer or not plr.Character then return end
+    local head = plr.Character:FindFirstChild("Head")
+    if not head then return end
+
+    RemoveESP(plr)
+
+    local billboard = Instance.new("BillboardGui")
+    billboard.Name = "ItemESP"
+    billboard.Parent = head
+    billboard.Size = UDim2.new(0, 100, 0, 20)
+    billboard.StudsOffset = Vector3.new(0, 3.2, 0)
+    billboard.AlwaysOnTop = true
+
+    local label = Instance.new("TextLabel")
+    label.Parent = billboard
+    label.Size = UDim2.new(1, 0, 1, 0)
+    label.TextColor3 = Color3.fromRGB(255, 255, 255)
+    label.Font = Enum.Font.SourceSansBold
+    label.TextSize = 10
+    label.BackgroundTransparency = 1
+    label.TextStrokeTransparency = 0.3
+
+    task.spawn(function()
+        while billboard and billboard.Parent do
+            local heldItem = "Tay không"
+            if plr.Character then
+                for _, child in ipairs(plr.Character:GetChildren()) do
+                    if child:IsA("Tool") then
+                        heldItem = child.Name
+                        break
+                    end
+                end
+            end
+            label.Text = plr.DisplayName .. " | " .. heldItem
+            task.wait(0.4)
+        end
+    end)
+end
+
+local function TogglePlayerESP(parent)
+    local frame = Instance.new("Frame")
+    frame.Parent = parent
+    frame.Size = UDim2.new(1, -6, 0, 45)
+    frame.BackgroundColor3 = Color3.fromRGB(28, 28, 32)
+    
+    local corner = Instance.new("UICorner")
+    corner.CornerRadius = UDim.new(0, 6)
+    corner.Parent = frame
+    
+    local label = Instance.new("TextLabel")
+    label.Parent = frame
+    label.Position = UDim2.new(0, 12, 0, 0)
+    label.Size = UDim2.new(0.6, 0, 1, 0)
+    label.Text = "Hiện đồ trên đầu"
+    label.TextColor3 = Color3.fromRGB(220, 220, 220)
+    label.TextXAlignment = Enum.TextXAlignment.Left
+    label.BackgroundTransparency = 1
+    label.Font = Enum.Font.SourceSansBold
+    label.TextSize = 14
+    
+    table.insert(extraLabels, {label = label, nameVN = "Hiện đồ trên đầu", nameEN = "Show Overhead Items"})
+    
+    local toggleBtn = Instance.new("TextButton")
+    toggleBtn.Parent = frame
+    toggleBtn.Position = UDim2.new(1, -50, 0.5, -12)
+    toggleBtn.Size = UDim2.new(0, 40, 0, 24)
+    toggleBtn.BackgroundColor3 = Color3.fromRGB(50, 50, 55)
+    toggleBtn.Text = ""
+    
+    local toggleCorner = Instance.new("UICorner")
+    toggleCorner.CornerRadius = UDim.new(1, 0)
+    toggleCorner.Parent = toggleBtn
+    
+    local circle = Instance.new("Frame")
+    circle.Parent = toggleBtn
+    circle.Position = UDim2.new(0, 3, 0.5, -9)
+    circle.Size = UDim2.new(0, 18, 0, 18)
+    circle.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
+    
+    local circleCorner = Instance.new("UICorner")
+    circleCorner.CornerRadius = UDim.new(1, 0)
+    circleCorner.Parent = circle
+    
+    toggleBtn.MouseButton1Click:Connect(function()
+        espEnabled = not espEnabled
+        circle:TweenPosition(espEnabled and UDim2.new(1, -21, 0.5, -9) or UDim2.new(0, 3, 0.5, -9), "Out", "Quad", 0.15, true)
+        toggleBtn.BackgroundColor3 = espEnabled and Color3.fromRGB(50, 130, 220) or Color3.fromRGB(50, 50, 55)
+        
+        if espEnabled then
+            for _, plr in ipairs(Players:GetPlayers()) do
+                CreateESP(plr)
+            end
+            
+            espConnections["PlayerAdded"] = Players.PlayerAdded:Connect(function(plr)
+                plr.CharacterAdded:Connect(function()
+                    if espEnabled then task.wait(1) CreateESP(plr) end
+                end)
+            end)
+        else
+            for _, conn in pairs(espConnections) do conn:Disconnect() end
+            espConnections = {}
+            for _, plr in ipairs(Players:GetPlayers()) do
+                RemoveESP(plr)
+            end
+        end
+    end)
+    parent.CanvasSize = UDim2.new(0, 0, 0, #parent:GetChildren() * 50)
+end
+
+TogglePlayerESP(tab6)
+
+-- --- 7. TAB XEM BALO (TỰ ĐỘNG CẬP NHẬT 2S, XUỐNG DÒNG, LỌC BỎ MẶT NẠ, ĐỒ ĂN, ĐẠN SHOP VÀ GỌN TÊN TRÙNG) ---
+local function SetupBackpackTab(parent)
+    local listHolder = Instance.new("Frame")
+    listHolder.Parent = parent
+    listHolder.Size = UDim2.new(1, -6, 0, 0)
+    listHolder.BackgroundTransparency = 1
+
+    local listLayout = Instance.new("UIListLayout")
+    listLayout.Parent = listHolder
+    listLayout.Padding = UDim.new(0, 6)
+
+    local function GetFilteredItems(plr)
+        local rawItems = {}
+
+        if plr:FindFirstChild("Backpack") then
+            for _, item in ipairs(plr.Backpack:GetChildren()) do
+                if item:IsA("Tool") then table.insert(rawItems, item.Name) end
+            end
+        end
+        if plr.Character then
+            for _, item in ipairs(plr.Character:GetChildren()) do
+                if item:IsA("Tool") then table.insert(rawItems, item.Name .. " (Cầm)") end
+            end
+        end
+
+        local uniqueList = {}
+        local checkExist = {}
+
+        for _, name in ipairs(rawItems) do
+            local lowerName = string.lower(name)
+            
+            -- Lọc bỏ đồ ăn, thức uống, hồi máu
+            local isJunk = string.find(lowerName, "pizza") or string.find(lowerName, "taco") or 
+                           string.find(lowerName, "burger") or string.find(lowerName, "candy") or 
+                           string.find(lowerName, "kẹo") or string.find(lowerName, "heal") or 
+                           string.find(lowerName, "med") or string.find(lowerName, "phone") or 
+                           string.find(lowerName, "điện thoại") or string.find(lowerName, "food") or 
+                           string.find(lowerName, "drink") or string.find(lowerName, "water") or
+                           string.find(lowerName, "mentos")
+
+            -- Lọc bỏ mặt nạ (masked)
+            local isMask = string.find(lowerName, "masked") or string.find(lowerName, "mask")
+
+            -- Lọc bỏ đạn cửa hàng súng
+            local isGunShopAmmo = string.find(lowerName, "pistol ammo") or 
+                                 string.find(lowerName, "smg ammo") or 
+                                 string.find(lowerName, "rifle ammo") or 
+                                 string.find(lowerName, "shotgun ammo") or 
+                                 string.find(lowerName, "đạn súng ngắn") or 
+                                 string.find(lowerName, "đạn trường")
+
+            if not isJunk and not isMask and not isGunShopAmmo then
+                -- Gom các món trùng lặp lại (chỉ hiện 1 tên duy nhất cho gọn)
+                if not checkExist[name] then
+                    checkExist[name] = true
+                    table.insert(uniqueList, name)
+                end
+            end
+        end
+
+        return uniqueList
+    end
+
+    local function RenderBackpackItems()
+        for _, child in ipairs(listHolder:GetChildren()) do
+            if not child:IsA("UIListLayout") then child:Destroy() end
+        end
+
+        local totalHeight = 0
+        for _, plr in ipairs(Players:GetPlayers()) do
+            if plr ~= LocalPlayer then
+                local itemList = GetFilteredItems(plr)
+                local hasNoItems = (#itemList == 0)
+
+                local card = Instance.new("Frame")
+                card.Parent = listHolder
+                card.Size = UDim2.new(1, 0, 0, 0)
+                card.AutomaticSize = Enum.AutomaticSize.Y
+                card.BackgroundColor3 = Color3.fromRGB(28, 28, 32)
+
+                local cCorner = Instance.new("UICorner")
+                cCorner.CornerRadius = UDim.new(0, 6)
+                cCorner.Parent = card
+
+                local nameLbl = Instance.new("TextLabel")
+                nameLbl.Parent = card
+                nameLbl.Position = UDim2.new(0, 10, 0, 6)
+                nameLbl.Size = UDim2.new(1, -20, 0, 18)
+                nameLbl.Text = "👤 " .. plr.DisplayName
+                nameLbl.TextColor3 = Color3.fromRGB(255, 255, 255)
+                nameLbl.TextXAlignment = Enum.TextXAlignment.Left
+                nameLbl.BackgroundTransparency = 1
+                nameLbl.Font = Enum.Font.SourceSansBold
+                nameLbl.TextSize = 13
+
+                local itemsText = "🎒 Đồ: "
+                if not hasNoItems then
+                    itemsText = itemsText .. table.concat(itemList, ", ")
+                else
+                    itemsText = "🟢 Tay không (Không có đồ)"
+                end
+
+                local itemLbl = Instance.new("TextLabel")
+                itemLbl.Parent = card
+                itemLbl.Position = UDim2.new(0, 10, 0, 26)
+                itemLbl.Size = UDim2.new(1, -20, 0, 0)
+                itemLbl.AutomaticSize = Enum.AutomaticSize.Y
+                itemLbl.Text = itemsText
+                itemLbl.TextColor3 = hasNoItems and Color3.fromRGB(100, 255, 100) or Color3.fromRGB(200, 200, 200)
+                itemLbl.TextXAlignment = Enum.TextXAlignment.Left
+                itemLbl.TextYAlignment = Enum.TextYAlignment.Top
+                itemLbl.TextWrapped = true
+                itemLbl.BackgroundTransparency = 1
+                itemLbl.Font = Enum.Font.SourceSans
+                itemLbl.TextSize = 11
+
+                local approxLines = math.ceil(string.len(itemsText) / 55)
+                local cardHeight = math.max(45, 26 + (approxLines * 15) + 8)
+                card.Size = UDim2.new(1, 0, 0, cardHeight)
+
+                totalHeight = totalHeight + cardHeight + 6
+            end
+        end
+
+        listHolder.Size = UDim2.new(1, -6, 0, totalHeight)
+        parent.CanvasSize = UDim2.new(0, 0, 0, totalHeight + 20)
+    end
+
+    task.spawn(function()
+        while ScreenGui and ScreenGui.Parent do
+            if tab7.Visible then
+                RenderBackpackItems()
+            end
+            task.wait(2)
+        end
+    end)
+
+    RenderBackpackItems()
+end
+
+SetupBackpackTab(tab7)
 
 -- --- LOGIC XỬ LÝ SERVER HOP ---
 local visitedServers = {}
@@ -595,6 +862,6 @@ local function AddServerHopOption(parent)
     parent.CanvasSize = UDim2.new(0, 0, 0, #parent:GetChildren() * 50)
 end
 
-AddLanguageSelector(tab6)
-AddInstantPromptsToggle(tab6)
-AddServerHopOption(tab6)
+AddLanguageSelector(tab8)
+AddInstantPromptsToggle(tab8)
+AddServerHopOption(tab8)
